@@ -218,6 +218,9 @@ const messages: Record<Locale, Record<string, string>> = {
     txt_log_in: "Log In",
     txt_log_out: "Log Out",
     txt_lock: "Lock",
+    txt_menu: "Menu",
+    txt_settings: "Settings",
+    txt_back: "Back",
     txt_login: "Login",
     txt_login_credentials: "Login Credentials",
     txt_login_failed: "Login failed",
@@ -395,7 +398,7 @@ const messages: Record<Locale, Record<string, string>> = {
 };
 
 const zhCNOverrides: Record<string, string> = {
-  nav_my_vault: '我的保险库',
+  nav_my_vault: '我的密码库',
   nav_sends: 'Send',
   nav_admin_panel: '用户管理',
   nav_account_settings: '账户设置',
@@ -429,7 +432,7 @@ const zhCNOverrides: Record<string, string> = {
   txt_create_account: '创建账户',
   txt_back_to_login: '返回登录',
   txt_unlock: '解锁',
-  txt_unlock_vault: '解锁保险库',
+  txt_unlock_vault: '解锁密码库',
   txt_master_password: '主密码',
   txt_email: '邮箱',
   txt_name: '名称',
@@ -443,7 +446,7 @@ const zhCNOverrides: Record<string, string> = {
   txt_loading: '加载中...',
   txt_loading_nodewarden: '正在加载 NodeWarden...',
   txt_search_sends: '搜索发送...',
-  txt_search_your_secure_vault: '搜索你的保险库...',
+  txt_search_your_secure_vault: '搜索你的密码库...',
   txt_refresh: '刷新',
   txt_sync: '同步',
   txt_sync_vault: '同步',
@@ -752,7 +755,7 @@ const zhCNOverrides: Record<string, string> = {
   txt_use_your_one_time_recovery_code_to_disable_two_step_verification: '使用一次性恢复代码禁用两步验证。',
   txt_user_deleted: '用户已删除',
   txt_user_status_updated: '用户状态已更新',
-  txt_vault_synced: '保险库已同步',
+  txt_vault_synced: '密码库已同步',
   txt_verify: '验证',
   txt_web: '网页',
   txt_windows_desktop: 'Windows 桌面端',
@@ -782,6 +785,9 @@ const zhCNOverrides: Record<string, string> = {
 };
 
 zhCNOverrides.txt_lock = '锁定';
+zhCNOverrides.txt_menu = '菜单';
+zhCNOverrides.txt_settings = '设置';
+zhCNOverrides.txt_back = '返回';
 zhCNOverrides.txt_passkey = 'Passkey';
 zhCNOverrides.txt_passkey_created_at_value = '创建于 {value}';
 zhCNOverrides.txt_attachments = '附件';
@@ -901,8 +907,8 @@ zhCNOverrides.txt_folder_not_found = '文件夹不存在';
 zhCNOverrides.txt_folder_deleted = '文件夹已删除';
 zhCNOverrides.txt_delete_folder_failed = '删除文件夹失败';
 zhCNOverrides.txt_other = '其他';
-zhCNOverrides.txt_vault_key_unavailable = '账户密钥不可用，请先解锁保险库后重试。';
-zhCNOverrides.txt_vault_not_ready = '保险库数据尚未就绪';
+zhCNOverrides.txt_vault_key_unavailable = '账户密钥不可用，请先解锁密码库后重试。';
+zhCNOverrides.txt_vault_not_ready = '密码库数据尚未就绪';
 zhCNOverrides.txt_unsupported_export_format = '不支持的导出格式';
 zhCNOverrides.txt_invalid_encrypted_export = '加密导出文件无效。';
 zhCNOverrides.txt_export_belongs_to_another_account = '此加密导出文件属于另一个账号。';

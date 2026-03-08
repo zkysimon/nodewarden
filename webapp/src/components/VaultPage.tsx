@@ -6,6 +6,7 @@ import {
   ArrowUpDown,
   Check,
   CheckCheck,
+  ChevronLeft,
   Clipboard,
   CreditCard,
   Download,
@@ -76,6 +77,7 @@ const CREATE_TYPE_OPTIONS: TypeOption[] = [
 ];
 
 const VAULT_SORT_STORAGE_KEY = 'nodewarden.vault.sort.v1';
+const MOBILE_LAYOUT_QUERY = '(max-width: 900px)';
 const VAULT_SORT_OPTIONS: Array<{ value: VaultSortMode; label: string }> = [
   { value: 'edited', label: t('txt_sort_last_edited') },
   { value: 'created', label: t('txt_sort_created') },
@@ -398,11 +400,35 @@ export default function VaultPage(props: VaultPageProps) {
   const [repromptOpen, setRepromptOpen] = useState(false);
   const [repromptPassword, setRepromptPassword] = useState('');
   const [repromptApprovedCipherId, setRepromptApprovedCipherId] = useState<string | null>(null);
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
+  const [mobilePanel, setMobilePanel] = useState<'list' | 'detail' | 'edit'>('list');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const sortMenuRef = useRef<HTMLDivElement | null>(null);
   const attachmentInputRef = useRef<HTMLInputElement | null>(null);
   const sshSeedTicketRef = useRef(0);
   const sshFingerprintTicketRef = useRef(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia(MOBILE_LAYOUT_QUERY);
+    const sync = () => setIsMobileLayout(media.matches);
+    sync();
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', sync);
+      return () => media.removeEventListener('change', sync);
+    }
+    media.addListener(sync);
+    return () => media.removeListener(sync);
+  }, []);
+
+  useEffect(() => {
+    const onToggleSidebar = () => {
+      setMobileSidebarOpen((open) => !open);
+    };
+    window.addEventListener('nodewarden:toggle-sidebar', onToggleSidebar);
+    return () => window.removeEventListener('nodewarden:toggle-sidebar', onToggleSidebar);
+  }, []);
 
   useEffect(() => {
     const onQuickAdd = () => {
@@ -474,6 +500,19 @@ export default function VaultPage(props: VaultPageProps) {
     setRepromptPassword('');
     setRepromptOpen(false);
   }, [selectedCipherId]);
+
+  useEffect(() => {
+    if (!isMobileLayout) {
+      setMobilePanel('list');
+      setMobileSidebarOpen(false);
+      return;
+    }
+    if (isEditing) {
+      setMobilePanel('edit');
+    } else if (!selectedCipherId) {
+      setMobilePanel('list');
+    }
+  }, [isMobileLayout, isEditing, selectedCipherId]);
 
   useEffect(() => {
     if (searchComposing) return;
@@ -613,6 +652,8 @@ function folderName(id: string | null | undefined): string {
     setLocalError('');
     setAttachmentQueue([]);
     setRemovedAttachmentIds({});
+    if (isMobileLayout) setMobilePanel('edit');
+    setMobileSidebarOpen(false);
     if (type === 5) void seedSshDefaults();
   }
 
@@ -625,15 +666,19 @@ function folderName(id: string | null | undefined): string {
     setLocalError('');
     setAttachmentQueue([]);
     setRemovedAttachmentIds({});
+    if (isMobileLayout) setMobilePanel('edit');
+    setMobileSidebarOpen(false);
   }
 
   function cancelEdit(): void {
+    const returnToDetail = isMobileLayout && !isCreating && !!selectedCipher;
     setDraft(null);
     setIsEditing(false);
     setIsCreating(false);
     setLocalError('');
     setAttachmentQueue([]);
     setRemovedAttachmentIds({});
+    if (isMobileLayout) setMobilePanel(returnToDetail ? 'detail' : 'list');
   }
 
   function updateDraft(patch: Partial<VaultDraft>): void {
@@ -755,6 +800,7 @@ function folderName(id: string | null | undefined): string {
       setLocalError('');
       setAttachmentQueue([]);
       setRemovedAttachmentIds({});
+      if (isMobileLayout) setMobilePanel('detail');
     } finally {
       setBusy(false);
     }
@@ -767,6 +813,7 @@ function folderName(id: string | null | undefined): string {
       await props.onDelete(pendingDelete);
       setPendingDelete(null);
       cancelEdit();
+      if (isMobileLayout) setMobilePanel('list');
     } finally {
       setBusy(false);
     }
@@ -862,8 +909,17 @@ function folderName(id: string | null | undefined): string {
 
   return (
     <>
-      <div className="vault-grid">
-        <aside className="sidebar">
+      <div className={`vault-grid ${isMobileLayout ? `mobile-panel-${mobilePanel}` : ''}`}>
+        {isMobileLayout && mobileSidebarOpen && <div className="mobile-sidebar-mask" onClick={() => setMobileSidebarOpen(false)} />}
+        <aside className={`sidebar ${isMobileLayout ? 'mobile-sidebar-sheet' : ''} ${isMobileLayout && mobileSidebarOpen ? 'open' : ''}`}>
+          {isMobileLayout && (
+            <div className="mobile-sidebar-head">
+              <div className="mobile-sidebar-title">{t('txt_folders')}</div>
+              <button type="button" className="mobile-sidebar-close" onClick={() => setMobileSidebarOpen(false)} aria-label={t('txt_close')}>
+                <X size={16} />
+              </button>
+            </div>
+          )}
           <div className="sidebar-block">
             <button type="button" className={`tree-btn ${sidebarFilter.kind === 'all' ? 'active' : ''}`} onClick={() => setSidebarFilter({ kind: 'all' })}>
               <LayoutGrid size={14} className="tree-icon" /> <span className="tree-label">{t('txt_all_items')}</span>
@@ -978,7 +1034,7 @@ function folderName(id: string | null | undefined): string {
                 </div>
               )}
             </div>
-            <button type="button" className="btn btn-secondary small" disabled={busy || props.loading} onClick={() => void syncVault()}>
+            <button type="button" className="btn btn-secondary small list-icon-btn" disabled={busy || props.loading} onClick={() => void syncVault()}>
               <RefreshCw size={14} className="btn-icon" /> {t('txt_sync_vault')}
             </button>
           </div>
@@ -998,9 +1054,15 @@ function folderName(id: string | null | undefined): string {
             >
               <CheckCheck size={14} className="btn-icon" /> {t('txt_select_all')}
             </button>
-            <div className="create-menu-wrap" ref={createMenuRef}>
-              <button type="button" className="btn btn-primary small" onClick={() => setCreateMenuOpen((x) => !x)}>
-                <Plus size={14} className="btn-icon" /> {t('txt_add')}
+            <div className="create-menu-wrap mobile-fab-wrap" ref={createMenuRef}>
+              <button
+                type="button"
+                className="btn btn-primary small mobile-fab-trigger"
+                aria-label={t('txt_add')}
+                title={t('txt_add')}
+                onClick={() => setCreateMenuOpen((x) => !x)}
+              >
+                <Plus size={14} className="btn-icon" />
               </button>
               {createMenuOpen && (
                 <div className="create-menu">
@@ -1056,6 +1118,8 @@ function folderName(id: string | null | undefined): string {
                     }
                     setSelectedCipherId(cipher.id);
                     setRepromptApprovedCipherId(null);
+                    if (isMobileLayout) setMobilePanel('detail');
+                    setMobileSidebarOpen(false);
                   }}
                 >
                   <div className="list-icon-wrap">
@@ -1072,7 +1136,22 @@ function folderName(id: string | null | undefined): string {
           </div>
         </section>
 
-        <section className="detail-col">
+        <section className={`detail-col ${isMobileLayout ? 'mobile-detail-sheet' : ''} ${isMobileLayout && mobilePanel !== 'list' ? 'open' : ''}`}>
+          {isMobileLayout && mobilePanel !== 'list' && (
+            <div className="mobile-panel-head">
+              <button
+                type="button"
+                className="btn btn-secondary small mobile-panel-back"
+                onClick={() => {
+                  if (isEditing) cancelEdit();
+                  else setMobilePanel('list');
+                }}
+              >
+                <ChevronLeft size={14} className="btn-icon" />
+                {t('txt_back')}
+              </button>
+            </div>
+          )}
           {isEditing && draft && (
             <>
               <div className="card">
